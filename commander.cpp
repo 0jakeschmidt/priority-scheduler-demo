@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include "pcb.h"
+#include "queue_array.h" 
 using namespace std;
 
 /* master.cpp file */
@@ -56,35 +58,35 @@ main()
   cin >>chr;
     while (chr!='T') {
     
-    cout<<"Master: writing "<<chr<<endl;
+    //cout<<"Master: writing "<<chr<<endl;
 	 write(mcpipe1[WRITE_END], (char *)&chr, sizeof(char));
     if(chr == 'S'){
 	cin >>i;
-      cout <<"Master Writing "<<i<<endl;
+    //  cout <<"Master Writing "<<i<<endl;
       //write to the child process the PID value 
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
 	
 	cin >>i;
-      cout <<"Master Writing "<<i<<endl;
+     // cout <<"Master Writing "<<i<<endl;
       //write to the child process the value 
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
 
 	cin >>i;
-      cout <<"Master Writing "<<i<<endl;
+     // cout <<"Master Writing "<<i<<endl;
       //write to the child process the run_time
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
     }
     else if(chr== 'B'){
 	
       cin >>i;
-      cout <<"Master Writing "<<i<<endl;
+     // cout <<"Master Writing "<<i<<endl;
       //write to the child process the RID
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
     }
     else if(chr== 'U'){
 
       cin >>i;
-      cout <<"Master Writing "<<i<<endl;
+     // cout <<"Master Writing "<<i<<endl;
       //write to the child process the RID
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
 	
@@ -94,12 +96,12 @@ main()
     }
     else if(chr== 'C'){
 	 cin >>chr;
-         cout<<"Master: writing "<<chr<<endl;
+         //cout<<"Master: writing "<<chr<<endl;
 	//write cmd val to the child process
 	 write(mcpipe1[WRITE_END], (char *)&chr, sizeof(char));
 
       cin >>i;
-      cout <<"Master Writing "<<i<<endl;
+    //  cout <<"Master Writing "<<i<<endl;
       //write to the child process the num
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
     }
