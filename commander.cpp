@@ -34,7 +34,7 @@ main()
   sprintf(mc0, "%d", mcpipe1[READ_END]);
   sprintf(mc1, "%d", mcpipe1[WRITE_END]);
 
-  //fort the child process
+  //fork the child process
   if ((c1 = fork()) == -1) /* Create the first child process */ {
     perror("unable to fork child");
     exit(1);
@@ -58,28 +58,28 @@ main()
   cin >>chr;
     while (chr!='T') {
     
-    //cout<<"Master: writing "<<chr<<endl;
+   
 	 write(mcpipe1[WRITE_END], (char *)&chr, sizeof(char));
     if(chr == 'S'){
 	cin >>i;
-    //  cout <<"Master Writing "<<i<<endl;
+    
       //write to the child process the PID value 
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
 	
 	cin >>i;
-     // cout <<"Master Writing "<<i<<endl;
+     
       //write to the child process the value 
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
 
 	cin >>i;
-     // cout <<"Master Writing "<<i<<endl;
+    
       //write to the child process the run_time
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
     }
     else if(chr== 'B'){
 	
       cin >>i;
-     // cout <<"Master Writing "<<i<<endl;
+   
       //write to the child process the RID
       write(mcpipe1[WRITE_END], (int *)&i, sizeof(int));
     }
@@ -110,8 +110,8 @@ main()
     }
   
     else{
-	std::cout<<"couldn't read input, shouldn't reach this else cmdr\n";
-	exit(2);
+	// this is an invalid command, ignore
+	
     }
 
     cin >>chr; //Reading next line
@@ -119,7 +119,7 @@ main()
     //sleep for 1 second
     sleep (1);
 	}
-  //write out the last one, which is a P, so the wrt process receives the P and exits
+  //write out the last one, which is a T, so the wrt process receives the P and exits
   write(mcpipe1[WRITE_END], (char *)&chr, sizeof(char));
   cout <<"finished reading commands\n";
 
