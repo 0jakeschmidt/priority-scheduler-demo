@@ -1,11 +1,14 @@
 # Program #2
 
-Name:
+Name: Jacob Schmidt
 
 How to compile:
-  makefile?
+  g++ -o commander commander.cpp
+  g++ -o processManager processManager.cpp
+  ./commander <prog2_input.txt
 
 Anything not working:
-  It all works right?
+ It all works fine, I get the proper output.
+ It's not the prettiest code but it works.
 
 
