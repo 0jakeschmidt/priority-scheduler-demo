@@ -16,20 +16,24 @@ using namespace std;
 void contextSwitch(int, int, vector<pcb> &pcb);
 //moves process from cpu to either ready or blocked
 int processTrans(int, int, QueueArray<int>& que, vector<pcb> &pcb);
-//schedule
+//scheduler 
 void scheduler(int,vector<pcb> &pcb, QueueArray<int>& que);
+//print function, handles the format
 void printer(vector<pcb> &pcb,vector<int> &cpu, QueueArray<int> &b0,QueueArray<int> &b1,QueueArray<int> &b2, QueueArray<int> &ready,int time);
+//starts a process 
 void startProcess(vector<int> &cpu, QueueArray<int> &ready, vector<pcb> &pcb);
+// BLOCKS processes 
+void block(int, vector<int> running, vector<pcb> &pcb,QueueArray<int> &b0,QueueArray<int> &b1,QueueArray<int> &b2 );
 
 /* processManager.cpp file */
 
 int main(int argc, char *argv[]) {
   vector<pcb> pcb_table(100);
   QueueArray <int> readyState(4);
-  QueueArray <int> blockedState(50);
-  QueueArray <int> r0(50);
-  QueueArray <int> r1(50);
-  QueueArray <int> r2(50);
+  
+  QueueArray <int> r0(50); // blocked on resource 0
+  QueueArray <int> r1(50); // blocked on resource 1
+  QueueArray <int> r2(50); // blocked on resource 2
 
   
 
@@ -67,8 +71,9 @@ int main(int argc, char *argv[]) {
 	pcb_table[pid]=temp;
 
 	
-	readyState.Enqueue(pid,0);
-	if(runningState[QUANTUM] ==0){
+	readyState.Enqueue(pid,0); // add process to ready Queue
+
+	if(runningState[QUANTUM] ==0){ // checks to see if processes needs started 
 	startProcess(runningState, readyState, pcb_table);
 	}
 
@@ -77,35 +82,13 @@ int main(int argc, char *argv[]) {
 	
 	//cmd was B read rid
       read(mcpipe2[0], &rid, sizeof(int));
-     // cout <<"\nchild read rid: \n"<<rid<<endl;
+    
 	// block the current process for this resouce 
 	
-	// contextSwitch(runningState[CPU],runningState[QUANTUM], pcb_table);
-	int oldPrior = pcb_table[runningState[CPU]].priority;
-	if (oldPrior >0){
-	oldPrior--;
-	pcb_table[runningState[CPU]].setPriority(oldPrior);
-	}
-		int temp;
-	switch(rid){
-	
-	case 0: temp= r0.Enqueue(runningState[CPU],oldPrior);
-	break;
-
-	case 1: temp= r1.Enqueue(runningState[CPU],oldPrior);
-	break;	
-
-	case 2: temp= r2.Enqueue(runningState[CPU],oldPrior);
-	break;
-	
-	default: cout<<"error in blocking\n";
-	break;
-
-	}
+	 block(rid, runningState, pcb_table ,r0,r1,r2);
 	
 	//move new processes in 
-    runningState[CPU] = readyState.Dequeue();
-	runningState[QUANTUM] = pcb_table[runningState[CPU]].quantum;
+    startProcess(runningState, readyState, pcb_table);
 
     }
     else if(chr== 'U'){
@@ -147,10 +130,6 @@ int main(int argc, char *argv[]) {
 		runningState.at(QUANTUM) = quantumTemp;
 		contextSwitch(runningState[CPU], runningState[QUANTUM], pcb_table);
 		if(runningState.at(QUANTUM) == 0){
-		//then switch processes because its done;
-		//update the run time 
-		//contextSwitch(runningState.at(CPU), 0, pcb_table);
-		//process may not be finished, if not, put back in queue
         scheduler(runningState.at(CPU),pcb_table, readyState);
 		//off load readyqueue to cpu
 		startProcess(runningState, readyState, pcb_table);
@@ -159,7 +138,7 @@ int main(int argc, char *argv[]) {
 		//quantum wasn't finished, still need to check if process is done;
         //contextSwitch(runningState[CPU], runningState[QUANTUM], pcb_table);
 		if(pcb_table[runningState[CPU]].run_time == pcb_table[runningState[CPU]].cpu_time ){
-					cout<<"hello im here\n";
+	
 						startProcess(runningState, readyState, pcb_table);
 			}
 		}
@@ -200,7 +179,7 @@ int main(int argc, char *argv[]) {
 		//handle time
 		
       MyTime++; 
-	int quantumTemp = runningState.at(QUANTUM);
+	    int quantumTemp = runningState.at(QUANTUM);
 		quantumTemp--;
 		runningState.at(QUANTUM) = quantumTemp;
 		contextSwitch(runningState[CPU], runningState[QUANTUM], pcb_table);
@@ -223,13 +202,18 @@ int main(int argc, char *argv[]) {
 
     }
     else if(chr== 'P'){
-	// doesn't need a command, it should be handled by process manager, print state
+	
 	// this should trigger the fork, needs to print state
-	printer(pcb_table ,runningState , r0, r1, r2 , readyState, MyTime);
+	if(fork() == 0) 
+        { 
+		printer(pcb_table ,runningState , r0, r1, r2 , readyState, MyTime);
+		exit(0);
+		}
+	
     }
   
     else{
-	std::cout<<"something happens in my input, error from else in proc mang\n";
+	std::cout<<"something happens in my input, error\n";
 	exit(2);
     }
 
@@ -281,18 +265,18 @@ void scheduler(int pid,vector<pcb> &pcb, QueueArray<int>& que){
 	
 }
 void printer(vector<pcb> &pcb,vector<int> &cpu, QueueArray<int> &b0,QueueArray<int> &b1,QueueArray<int> &b2, QueueArray<int> &ready,int time){
-int *b00 = b0.Qstate(0);
-int *b01 = b0.Qstate(1);
-int *b02 = b0.Qstate(2);
-int *b03 = b0.Qstate(3);
-int *b10 = b1.Qstate(0);
-int *b11 = b1.Qstate(1);
-int *b12 = b1.Qstate(2);
-int *b13 = b1.Qstate(3);
-int *b20 = b2.Qstate(0);
-int *b21 = b2.Qstate(1);
-int *b22 = b2.Qstate(2);
-int *b23 = b2.Qstate(3);
+int *b00 = b0.Qstate(0); // this is for blocked state 0 priority 0
+int *b01 = b0.Qstate(1); // this is for blocked state 0 priority 1
+int *b02 = b0.Qstate(2); // this is for blocked state 0 priority 2
+int *b03 = b0.Qstate(3); // this is for blocked state 0 priority 3
+int *b10 = b1.Qstate(0); // this is for blocked state 1 priority 0
+int *b11 = b1.Qstate(1); // this is for blocked state 1 priority 1
+int *b12 = b1.Qstate(2); // this is for blocked state 1 priority 2
+int *b13 = b1.Qstate(3); // this is for blocked state 1 priority 3
+int *b20 = b2.Qstate(0); // this is for blocked state 2 priority 0
+int *b21 = b2.Qstate(1); // this is for blocked state 2 priority 1
+int *b22 = b2.Qstate(2); // this is for blocked state 2 priority 2
+int *b23 = b2.Qstate(3); // this is for blocked state 2 priority 3
 int *r0 = ready.Qstate(0);
 int *r1 = ready.Qstate(1);
 int *r2 = ready.Qstate(2);
@@ -417,7 +401,7 @@ if(b1.Qsize(3)==0){
 
 //blocked for r2
 if(b2.QAsize()==0){
-cout<<"Queue of processes Blocked for resource 2 is empty"<<endl;
+cout<<"Queue of processes Blocked for resource 2 is empty"<<endl<<endl;
 }else
 
 {
@@ -523,8 +507,31 @@ void startProcess(vector<int> &cpu, QueueArray<int> &ready, vector<pcb> &pcb){
 	
 	cpu[CPU] = ready.Dequeue();
 	cpu[QUANTUM] = pcb[cpu[CPU]].quantum;
-	cout<<"quantum = "<<cpu[QUANTUM]<<endl;
+	
 	
 }
 
+void block(int rid, vector<int> running, vector<pcb> &pcb,QueueArray<int> &b0,QueueArray<int> &b1,QueueArray<int> &b2 ){
 
+    int oldPrior = pcb[running[CPU]].priority;
+	if (oldPrior >0){
+	oldPrior--;
+	pcb[running[CPU]].setPriority(oldPrior);
+	}
+		int temp;
+	switch(rid){
+	
+	case 0: temp= b0.Enqueue(running[CPU],oldPrior);
+	break;
+
+	case 1: temp= b1.Enqueue(running[CPU],oldPrior);
+	break;	
+
+	case 2: temp= b2.Enqueue(running[CPU],oldPrior);
+	break;
+	
+	default: cout<<"error in blocking\n";
+	break;
+
+	}
+}
