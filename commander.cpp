@@ -13,7 +13,7 @@ using namespace std;
 #define READ_END 0
 #define WRITE_END 1
 
-main()
+int main()
  
 {
   int max = 100, i, c1, stat;
