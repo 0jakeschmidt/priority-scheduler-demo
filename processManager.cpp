@@ -45,10 +45,6 @@ int main(int argc, char *argv[]) {
   QueueArray <int> r1(50); // blocked on resource 1
   QueueArray <int> r2(50); // blocked on resource 2
 
-  
-
-  //first element is pid, second is always quantum time;
-  vector<int> runningState(2);
   int i, max = 100;
   int mcpipe2[2], num;
   char chr;
